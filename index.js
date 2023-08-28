@@ -9,6 +9,35 @@ const context = canvas.getContext("2d");
 if (!context)
     throw new Error("Could not get 2d context from canvas");
 
+// class Identifier {
+//     #_namespace = ""
+//     #_location = ""
+//     constructor(namespace, location) {
+//         this.#_namespace = String(namespace ?? "");
+//         this.#_location = String(location ?? "");
+//     }
+
+//     /**
+//      * @param {string} str 
+//      * @returns {Identifier}
+//      */
+//     static fromString(str) {
+//         str = String(str);
+//         if (!str.includes(":"))
+//             return new Identifier("", str);
+//         const parts = str.split(':');
+//         return new Identifier(parts[0], parts[1]);
+//     }
+
+//     getNamespace() {
+//         return this.#_namespace;
+//     }
+    
+//     getLocation() {
+//         return this.#_location;
+//     }
+// }
+
 const textures = new Map();
 async function loadTextures() {
     const elements = document.querySelectorAll(".sprite");
@@ -42,11 +71,6 @@ async function loadTextures() {
     }
 }
 
-async function main() {
-    await loadTextures()
-    render()
-}
-
 let GLOBAL_SCALE = 1;
 /**
  * 
@@ -59,11 +83,6 @@ let GLOBAL_SCALE = 1;
  */
 function imageFromImageData(imageData, uvX, uvY, width, height) {
     const tempCanvas = document.createElement("canvas");
-    console.log(`Image Width: ${imageData.width}, Image Height: ${imageData.height}`);
-    console.log(`Canvas Width: ${tempCanvas.width}, Canvas Height: ${tempCanvas.height}`);
-    console.log(`Width: ${width}, Height: ${height}`);
-    console.log(`uvX: ${uvX}, uvY: ${uvY}`);
-    console.log('');
     tempCanvas.width = width;
     tempCanvas.height = height;
     const tempContext = tempCanvas.getContext("2d");
@@ -83,23 +102,22 @@ const imageCache = new Map();
  * @param {number} width 
  * @param {number} height 
  */
-function drawFromTexture(textureData, uvX, uvY, posX, posY, width, height) {
-    const id = (width * height) + (uvX + uvY);
-    uvX = Math.floor(uvX);
-    uvY = Math.floor(uvY);
-    posX = Math.floor(posX);
-    posY = Math.floor(posY);
-    width = Math.floor(width);
-    height = Math.floor(height);
-    width *= GLOBAL_SCALE;
-    height *= GLOBAL_SCALE;
+function drawFromTexture(textureData, uvX, uvY, posX, posY, realWidth, realHeight) {
+    [uvX, uvY, posX, posY, realWidth, realHeight] = [uvX, uvY, posX, posY, realWidth, realHeight].map(arg => Math.floor(arg));
+    const id = (realWidth * realHeight) + (uvX + uvY);
+
+    // TODO: scaling with GLOBAL_SCALE 
+    let drawnWidth = realWidth * GLOBAL_SCALE;
+    let drawnHeight = realHeight * GLOBAL_SCALE;
+
     if (!imageCache.has(id)) {
-        const dataImage = imageFromImageData(textureData, uvX, uvY, width, height);
-        context.drawImage(dataImage, posX, posY, width, height); 
+        // WORKAROUND for transparency
+        const dataImage = imageFromImageData(textureData, uvX, uvY, realWidth, realHeight);
+        context.drawImage(dataImage, posX, posY, drawnWidth, drawnHeight); 
         imageCache.set(id, dataImage);
     } else {
         const dataImage = imageCache.get(id);   
-        context.drawImage(dataImage, posX, posY, width, height);
+        context.drawImage(dataImage, posX, posY, drawnWidth, drawnHeight);
     }
 }
 
@@ -116,17 +134,17 @@ function render() {
     // Hotbar
     const hotbarX = (canvas.width / 2) - (182 / 2);
     const hotbarY = canvas.height - 22;
-    drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, hotbarY, 182, 22)
+    drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, hotbarY, 182, 22);
 
     // Hotbar Selected 
-    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 24), canvas.height - 24, 24, 24)
+    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 24), canvas.height - 24, 24, 24);
     
     if (isMouseDown) {
         // Button (Hover/Clicked)
-        drawFromTexture(WIDGETS_TEXTURE, 0, 86, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20)
+        drawFromTexture(WIDGETS_TEXTURE, 0, 86, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20);
     } else {
         // Button (Awaiting Input)
-        drawFromTexture(WIDGETS_TEXTURE, 0, 66, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20)
+        drawFromTexture(WIDGETS_TEXTURE, 0, 66, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20);
     }
 
     requestAnimationFrame(render);
@@ -155,5 +173,10 @@ window.addEventListener("mouseup", (ev) => {
 });
 
 window.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
+async function main() {
+    await loadTextures()
+    render()
+}
 
 document.addEventListener("DOMContentLoaded", main);
