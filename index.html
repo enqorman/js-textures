@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .sprite {
+            display: none;
+        }
+
+        #main {
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <img src="./assets/bruh/textures/gui/widgets.png" class="sprite" texture-id="widgets">
+    </div>
+
+    <canvas id="main" width="640" height="480"></canvas>
+
+    <button onclick="loadTextures">Reload Textures</button>
+
+    <script src="index.js" defer></script>
+</body>
+</html>
