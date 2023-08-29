@@ -38,41 +38,53 @@ if (!context)
 //     }
 // }
 
-const textures = new Map();
-async function loadTextures() {
-    const elements = document.querySelectorAll(".sprite");
-    if (elements.length == 0)
-        return;
-    for (let i = 0; i < elements.length; ++i) {
-        const element = elements[i];
-        if (!(element instanceof HTMLImageElement))
-            continue;
-        if (!element.complete)
-            await element.decode()
-        const id = element.getAttribute("texture-id");
-        try {
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = element.width;
-            tempCanvas.height = element.height;
-            tempCanvas.style.display = "none";
-            document.body.appendChild(tempCanvas);
+const globalTextures = new Map();
+async function loadTextures(textures) {
+    if (textures && textures instanceof Array) {
+        if (textures.length == 0)
+            return;
+        for (let i = 0; i < textures.length; ++i) {
+            const textureLocation = textures[i];
+            if (typeof textureLocation != "string")
+                continue;
+            // TODO: resource packs kekw
+        }
+    } else {
+        const elements = document.querySelectorAll(".sprite");
+        if (elements.length == 0)
+            return;
+        for (let i = 0; i < elements.length; ++i) {
+            const element = elements[i];
+            if (!(element instanceof HTMLImageElement))
+                continue;
+            if (!element.complete)
+                await element.decode()
+            const id = element.getAttribute("texture-id");
+            try {
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = element.width;
+                tempCanvas.height = element.height;
+                tempCanvas.style.display = "none";
+                document.body.appendChild(tempCanvas);
 
-            const tempContext = tempCanvas.getContext("2d");
-            tempContext.drawImage(element, 0, 0);
+                const tempContext = tempCanvas.getContext("2d");
+                tempContext.drawImage(element, 0, 0);
 
-            const imageData = tempContext.getImageData(0, 0, element.width, element.height);
-            if (imageData.data.length % 4 != 0)
-                throw new Error("Invalid image data was provided.");
+                const imageData = tempContext.getImageData(0, 0, element.width, element.height);
+                if (imageData.data.length % 4 != 0)
+                    throw new Error("Invalid image data was provided.");
 
-            textures.set(id, imageData);
-            document.body.removeChild(tempCanvas);
-        } catch(err) {
-            console.error(`Failed to load texture with id '${id}'`);
-            console.error(err);
+                    globalTextures.set(id, imageData);
+                document.body.removeChild(tempCanvas);
+            } catch(err) {
+                console.error(`Failed to load texture with id '${id}'`);
+                console.error(err);
+            }
         }
     }
 }
 
+// WIP
 let GLOBAL_SCALE = 1;
 /**
  * 
@@ -137,12 +149,11 @@ function render() {
     context.fillStyle = "blue";
     context.fillRect(0, 0, width, height);
 
-    const WIDGETS_TEXTURE = textures.get("widgets");
+    const WIDGETS_TEXTURE = globalTextures.get("widgets");
 
     // Hotbar
     const hotbarX = (canvas.width / 2) - (182 / 2);
-    const hotbarY = canvas.height - 22;
-    drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, hotbarY, 182, 22);
+    drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, canvas.height - 22, 182, 22);
 
     // Hotbar Selected (slot size is 22x22 (256x256))
     drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 20) - 1, canvas.height - 23, 24, 24);
@@ -172,8 +183,8 @@ document.addEventListener("DOMContentLoaded", async function main() {
     
     canvas.addEventListener("mousewheel", (ev) => {
         ev.preventDefault();
-        const add = invertedScrollwheel ? -1 : 1;
-        slotId = (slotId + (ev.deltaY < 0 ? add : -add) + 9) % 9;
+        const v = invertedScrollwheel ? -1 : 1;
+        slotId = (slotId + (ev.deltaY < 0 ? v : -v) + 9) % 9;
     });
 
     canvas.addEventListener("mousedown", (ev) => {
