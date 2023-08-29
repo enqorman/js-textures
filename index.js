@@ -125,6 +125,12 @@ function drawFromTexture(textureData, uvX, uvY, posX, posY, realWidth, realHeigh
 
 let slotId = 0;
 let isMouseDown = false;
+let invertedScrollwheel = false;
+
+function invertScrollwheel() {
+    invertedScrollwheel = !invertedScrollwheel;
+}
+
 function render() {
     const { width, height } = canvas;
 
@@ -166,7 +172,8 @@ document.addEventListener("DOMContentLoaded", async function main() {
     
     canvas.addEventListener("mousewheel", (ev) => {
         ev.preventDefault();
-        slotId = (slotId + (ev.deltaY < 0 ? 1 : -1) + 9) % 9;
+        const add = invertedScrollwheel ? -1 : 1;
+        slotId = (slotId + (ev.deltaY < 0 ? add : -add) + 9) % 9;
     });
 
     canvas.addEventListener("mousedown", (ev) => {
