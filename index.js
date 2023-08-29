@@ -47,6 +47,8 @@ async function loadTextures() {
         const element = elements[i];
         if (!(element instanceof HTMLImageElement))
             continue;
+        if (!element.complete)
+            await element.decode()
         const id = element.getAttribute("texture-id");
         try {
             const tempCanvas = document.createElement("canvas");
