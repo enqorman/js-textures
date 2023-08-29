@@ -137,7 +137,7 @@ function render() {
     drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, hotbarY, 182, 22);
 
     // Hotbar Selected 
-    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 24), canvas.height - 24, 24, 24);
+    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 20), canvas.height - 24, 24, 24);
     
     if (isMouseDown) {
         // Button (Hover/Clicked)
@@ -150,7 +150,7 @@ function render() {
     requestAnimationFrame(render);
 }
 
-window.addEventListener("keydown", (ev) => {
+canvas.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     if (ev.repeat)
         return;
@@ -158,21 +158,21 @@ window.addEventListener("keydown", (ev) => {
         slotId = ev.keyCode - 49;
 });
 
-window.addEventListener("mousedown", (ev) => {
+canvas.addEventListener("mousedown", (ev) => {
     ev.preventDefault();
     if (ev.button != 0) 
         return;
     isMouseDown = true;
 });
 
-window.addEventListener("mouseup", (ev) => {
+canvas.addEventListener("mouseup", (ev) => {
     ev.preventDefault();
     if (ev.button != 0) 
         return;
     isMouseDown = false;
 });
 
-window.addEventListener("contextmenu", (ev) => ev.preventDefault());
+canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
 
 async function main() {
     await loadTextures()
