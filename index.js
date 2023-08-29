@@ -107,8 +107,8 @@ function drawFromTexture(textureData, uvX, uvY, posX, posY, realWidth, realHeigh
     const id = (realWidth * realHeight) + (uvX + uvY);
 
     // TODO: scaling with GLOBAL_SCALE 
-    let drawnWidth = realWidth * GLOBAL_SCALE;
-    let drawnHeight = realHeight * GLOBAL_SCALE;
+    const drawnWidth = realWidth * GLOBAL_SCALE;
+    const drawnHeight = realHeight * GLOBAL_SCALE;
 
     if (!imageCache.has(id)) {
         // WORKAROUND for transparency
@@ -136,8 +136,8 @@ function render() {
     const hotbarY = canvas.height - 22;
     drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, hotbarY, 182, 22);
 
-    // Hotbar Selected 
-    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 20), canvas.height - 24, 24, 24);
+    // Hotbar Selected (slot size is 22x22 (256x256))
+    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 20) - 1, canvas.height - 23, 24, 24);
     
     if (isMouseDown) {
         // Button (Hover/Clicked)
@@ -150,33 +150,31 @@ function render() {
     requestAnimationFrame(render);
 }
 
-canvas.addEventListener("keydown", (ev) => {
-    ev.preventDefault();
-    if (ev.repeat)
-        return;
-    if (ev.keyCode >= 49 && ev.keyCode <= 57)
-        slotId = ev.keyCode - 49;
-});
-
-canvas.addEventListener("mousedown", (ev) => {
-    ev.preventDefault();
-    if (ev.button != 0) 
-        return;
-    isMouseDown = true;
-});
-
-window.addEventListener("mouseup", (ev) => {
-    ev.preventDefault();
-    if (ev.button != 0) 
-        return;
-    isMouseDown = false;
-});
-
-canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
-
-async function main() {
+document.addEventListener("DOMContentLoaded", async function main() {
     await loadTextures()
     render()
-}
 
-document.addEventListener("DOMContentLoaded", main);
+    window.addEventListener("keydown", (ev) => {
+        ev.preventDefault();
+        if (ev.repeat)
+            return;
+        if (ev.keyCode >= 49 && ev.keyCode <= 57)
+            slotId = ev.keyCode - 49;
+    });
+    
+    canvas.addEventListener("mousedown", (ev) => {
+        ev.preventDefault();
+        if (ev.button != 0) 
+            return;
+        isMouseDown = true;
+    });
+    
+    window.addEventListener("mouseup", (ev) => {
+        ev.preventDefault();
+        if (ev.button != 0) 
+            return;
+        isMouseDown = false;
+    });
+    
+    canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+});
