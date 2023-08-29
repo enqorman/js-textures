@@ -165,7 +165,7 @@ canvas.addEventListener("mousedown", (ev) => {
     isMouseDown = true;
 });
 
-canvas.addEventListener("mouseup", (ev) => {
+window.addEventListener("mouseup", (ev) => {
     ev.preventDefault();
     if (ev.button != 0) 
         return;
