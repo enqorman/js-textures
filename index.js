@@ -164,6 +164,11 @@ document.addEventListener("DOMContentLoaded", async function main() {
             slotId = ev.keyCode - 49;
     });
     
+    canvas.addEventListener("mousewheel", (ev) => {
+        ev.preventDefault();
+        slotId = (slotId + (ev.deltaY < 0 ? 1 : -1) + 9) % 9;
+    });
+
     canvas.addEventListener("mousedown", (ev) => {
         ev.preventDefault();
         if (ev.button != 0) 
