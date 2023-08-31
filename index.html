@@ -12,7 +12,7 @@
             box-sizing: border-box;
         }
 
-        .sprite {
+        .texture {
             display: none;
         }
 
@@ -23,7 +23,7 @@
 </head>
 <body>
     <div>
-        <img src="./assets/bruh/textures/gui/widgets.png" class="sprite" texture-id="widgets">
+        <img src="./assets/bruh/textures/gui/widgets.png" class="texture" texture-id="widgets">
     </div>
 
     <canvas id="main" width="640" height="480"></canvas>
@@ -33,6 +33,9 @@
         <button onclick="loadTextures()">Reload Textures</button>
     </div>
 
-    <script src="index.js" defer></script>
+    <script src="./src/Vec2d.js" defer type="module"></script>
+    <script src="./src/Texture.js" defer type="module"></script>
+    <script src="./src/Button.js" defer type="module"></script>
+    <script src="index.js" defer type="module"></script>
 </body>
 </html>
