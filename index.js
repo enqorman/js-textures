@@ -1,6 +1,6 @@
 import Button from './src/Button.js';
 import { drawFromTexture, loadTextures } from './src/Texture.js';
-import { globalTextures, guiScale, invertedScrollwheel } from './src/Globals.js';
+import { globalTextures, guiScale, invertedScrollwheel, setInvertedScrollwheel, slotId, setSlotId } from './src/Globals.js';
 import Vec2d from "./src/Vec2d.js";
 
 /**
@@ -13,11 +13,6 @@ if (!canvas)
 export const context = canvas.getContext("2d");
 if (!context)
     throw new Error("Could not get 2d context from canvas");
-
-let slotId = 0;
-function invertScrollwheel() {
-    invertedScrollwheel = !invertedScrollwheel;
-}
 
 async function renderHotbar() {
     const WIDGETS_TEXTURE = globalTextures.get("widgets");
@@ -53,18 +48,30 @@ document.addEventListener("DOMContentLoaded", async function main() {
     await loadTextures()
     await render()
 
+    const invertScrollwheelButton = document.getElementById("invertScrollwheel");
+    if (!invertScrollwheelButton)
+        throw new Error("Could not find the invert scrollwheel button in the DOM!");
+
+    invertScrollwheelButton.addEventListener("click", () => setInvertedScrollwheel(!invertedScrollwheel));
+
+    const reloadTexturesButton = document.getElementById("reloadTextures"); 
+    if (!reloadTexturesButton)
+        throw new Error("Could not find the reload textures button in the DOM!");
+
+    reloadTexturesButton.addEventListener("click", loadTextures);
+
     window.addEventListener("keydown", (ev) => {
         ev.preventDefault();
         if (ev.repeat)
             return;
         if (ev.keyCode >= 49 && ev.keyCode <= 57)
-            slotId = ev.keyCode - 49;
+            setSlotId(ev.keyCode - 49);
     });
     
     canvas.addEventListener("mousewheel", (ev) => {
         ev.preventDefault();
         const v = invertedScrollwheel ? -1 : 1;
-        slotId = (slotId + (ev.deltaY < 0 ? v : -v) + 9) % 9;
+        setSlotId((slotId + (ev.deltaY < 0 ? v : -v) + 9) % 9);
     });
 
     canvas.addEventListener("mousedown", (ev) => {
