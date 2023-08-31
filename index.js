@@ -9,6 +9,17 @@ const context = canvas.getContext("2d");
 if (!context)
     throw new Error("Could not get 2d context from canvas");
 
+class Vec2d {
+    constructor(x, y) {
+        this.x = parseFloat(x);
+        if (isNaN(this.x))
+            this.x = 0;
+        this.y = parseFloat(y);
+        if (isNaN(this.y))
+            this.x = 0;
+    }
+}
+
 // class Identifier {
 //     #_namespace = ""
 //     #_location = ""
@@ -74,7 +85,7 @@ async function loadTextures(textures) {
                 if (imageData.data.length % 4 != 0)
                     throw new Error("Invalid image data was provided.");
 
-                    globalTextures.set(id, imageData);
+                globalTextures.set(id, imageData);
                 document.body.removeChild(tempCanvas);
             } catch(err) {
                 console.error(`Failed to load texture with id '${id}'`);
@@ -89,18 +100,17 @@ let GLOBAL_SCALE = 1;
 /**
  * 
  * @param {ImageData} imageData 
- * @param {number} uvX 
- * @param {number} uvY 
+ * @param {Vec2d} uvPos
  * @param {number} width 
  * @param {number} height 
  * @returns 
  */
-function imageFromImageData(imageData, uvX, uvY, width, height) {
+function imageFromImageData(imageData, uvPos, textureWidth, textureHeight) {
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = width;
-    tempCanvas.height = height;
+    tempCanvas.width = textureWidth;
+    tempCanvas.height = textureHeight;
     const tempContext = tempCanvas.getContext("2d");
-    tempContext.putImageData(imageData, -uvX, -uvY, uvX, uvY, width, height); 
+    tempContext.putImageData(imageData, -uvPos.x, -uvPos.y, uvPos.x, uvPos.y, textureWidth, textureHeight); 
     const image = new Image();
     image.src = tempCanvas.toDataURL();
     return image;
@@ -109,40 +119,68 @@ function imageFromImageData(imageData, uvX, uvY, width, height) {
 const imageCache = new Map();
 /**
  * @param {ImageData} textureData 
- * @param {number} uvX 
- * @param {number} uvY 
- * @param {number} posX 
- * @param {number} posY 
+ * @param {Vec2d} uvPos
+ * @param {Vec2d} pos
  * @param {number} width 
  * @param {number} height 
  */
-function drawFromTexture(textureData, uvX, uvY, posX, posY, realWidth, realHeight) {
-    [uvX, uvY, posX, posY, realWidth, realHeight] = [uvX, uvY, posX, posY, realWidth, realHeight].map(arg => Math.floor(arg));
-    const id = (realWidth * realHeight) + (uvX + uvY);
+function drawFromTexture(textureData, uvPos, pos, realWidth, realHeight, textureWidth, textureHeight) {
+    if (uvPos.x % 1 != 0 || uvPos.y % 1 != 0)
+        throw new Error("uvX and uvY must be a integer, not a float!");
+    const id = (textureWidth * textureHeight) + (uvPos.x + uvPos.y);  
 
     // TODO: scaling with GLOBAL_SCALE 
     const drawnWidth = realWidth * GLOBAL_SCALE;
     const drawnHeight = realHeight * GLOBAL_SCALE;
-
     if (!imageCache.has(id)) {
         // WORKAROUND for transparency
-        const dataImage = imageFromImageData(textureData, uvX, uvY, realWidth, realHeight);
-        context.drawImage(dataImage, posX, posY, drawnWidth, drawnHeight); 
+        const dataImage = imageFromImageData(textureData, uvPos, textureWidth, textureHeight);
+        context.drawImage(dataImage, pos.x, pos.y, drawnWidth, drawnHeight); 
         imageCache.set(id, dataImage);
     } else {
         const dataImage = imageCache.get(id);   
-        context.drawImage(dataImage, posX, posY, drawnWidth, drawnHeight);
+        context.drawImage(dataImage, pos.x, pos.y, drawnWidth, drawnHeight);
     }
 }
 
 let slotId = 0;
-let isMouseDown = false;
 let invertedScrollwheel = false;
-
 function invertScrollwheel() {
     invertedScrollwheel = !invertedScrollwheel;
 }
 
+class Button {
+    /** 
+     * @param {string} text 
+     * @param {Vec2d} pos 
+     * @param {number} width 
+     * @param {number} height 
+     */
+    constructor(text, pos, width, height) {
+        this.text = text;
+        this.pos = pos;
+        this.width = width;
+        this.height = height;
+        this.disabled = false;
+        this.pressed = false;
+        this.hovered = false;
+    }
+
+    render() {
+        const WIDGETS_TEXTURE = globalTextures.get("widgets");
+        const buttonY = (this.pressed || this.hovered) ? 86 : (this.disabled ? 46 : 66);
+        drawFromTexture(WIDGETS_TEXTURE, new Vec2d(0, buttonY), this.pos, this.width, this.height, 200, 20);
+
+        const fontSize = 14;
+        context.fillStyle = this.disabled ? "grey" : (this.pressed ? "white": (this.hovered ? "yellow" : "white"));
+        context.font = fontSize + "px Mojangles";
+        const textMeasurement = context.measureText(this.text);
+        // todo: fix font Y
+        context.fillText(this.text, this.pos.x + (this.width / 2) - (textMeasurement.width / 2), this.pos.y + (this.height / 2) + (fontSize / 2) - 2, this.width);
+    }
+}
+
+const button = new Button("Button", new Vec2d(0, 0), 200, 20);
 function render() {
     const { width, height } = canvas;
 
@@ -153,19 +191,13 @@ function render() {
 
     // Hotbar
     const hotbarX = (canvas.width / 2) - (182 / 2);
-    drawFromTexture(WIDGETS_TEXTURE, 0, 0, hotbarX, canvas.height - 22, 182, 22);
+    drawFromTexture(WIDGETS_TEXTURE, new Vec2d(0, 0), new Vec2d(hotbarX, canvas.height - 22), 182, 22, 182, 22);
 
     // Hotbar Selected (slot size is 22x22 (256x256))
-    drawFromTexture(WIDGETS_TEXTURE, 0, 22, hotbarX + (slotId * 20) - 1, canvas.height - 23, 24, 24);
+    drawFromTexture(WIDGETS_TEXTURE, new Vec2d(0, 22), new Vec2d(hotbarX + (slotId * 20) - 1, canvas.height - 23), 24, 24, 24, 24);
     
-    if (isMouseDown) {
-        // Button (Hover/Clicked)
-        drawFromTexture(WIDGETS_TEXTURE, 0, 86, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20);
-    } else {
-        // Button (Awaiting Input)
-        drawFromTexture(WIDGETS_TEXTURE, 0, 66, (canvas.width / 2) - 100, (canvas.height / 2) - 10, 200, 20);
-    }
-
+    button.pos = new Vec2d((canvas.width / 2) - (button.width / 2), (canvas.height / 2) - (button.height / 2));
+    button.render();
     requestAnimationFrame(render);
 }
 
@@ -191,14 +223,25 @@ document.addEventListener("DOMContentLoaded", async function main() {
         ev.preventDefault();
         if (ev.button != 0) 
             return;
-        isMouseDown = true;
+        const { offsetX: x, offsetY: y } = ev;
+        if ((x >= button.pos.x && x <= button.pos.x + button.width) && (y >= button.pos.y && y <= button.pos.y + button.height))
+            button.pressed = true;
     });
     
-    window.addEventListener("mouseup", (ev) => {
+    canvas.addEventListener("mouseup", (ev) => {
         ev.preventDefault();
         if (ev.button != 0) 
             return;
-        isMouseDown = false;
+        button.pressed = false;
+    });
+
+    canvas.addEventListener("mousemove", (ev) => {
+        ev.preventDefault();
+        const { offsetX: x, offsetY: y } = ev;
+        if ((x >= button.pos.x && x <= button.pos.x + button.width) && (y >= button.pos.y && y <= button.pos.y + button.height))
+            button.hovered = true;
+        else 
+            button.hovered = false;
     });
     
     canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
