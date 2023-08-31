@@ -4,7 +4,7 @@ import { globalTextures, guiScale, invertedScrollwheel, setInvertedScrollwheel, 
 import Vec2d from "./src/Vec2d.js";
 
 /**
- * @type {HTMLCanvasElement | undefined}
+ * @type {HTMLCanvasElement | null}
  */
 export const canvas = document.getElementById("main");
 if (!canvas) 
@@ -45,9 +45,6 @@ async function render() {
 }
 
 document.addEventListener("DOMContentLoaded", async function main() {
-    await loadTextures()
-    await render()
-
     const invertScrollwheelButton = document.getElementById("invertScrollwheel");
     if (!invertScrollwheelButton)
         throw new Error("Could not find the invert scrollwheel button in the DOM!");
@@ -106,4 +103,7 @@ document.addEventListener("DOMContentLoaded", async function main() {
     });
     
     canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
+    await loadTextures()
+    await render()
 });

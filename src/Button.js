@@ -1,6 +1,6 @@
 import { context } from '../index.js';
 import { drawFromTexture } from './Texture.js';
-import { globalTextures, guiScale } from './Globals.js';
+import { globalTextures, guiScale } from './Global.js';
 import Vec2d from "./Vec2d.js";
 
 export default class Button {

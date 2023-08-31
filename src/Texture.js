@@ -45,15 +45,17 @@ export default class Texture {
  * 
  * @param {ImageData} imageData 
  * @param {Vec2d} uv
- * @param {number} width 
- * @param {number} height 
- * @returns {ImageData}
+ * @param {number} textureWidth 
+ * @param {number} textureHeight 
+ * @returns {Promise<HTMLImageElement>}
  */
 async function imageFromImageData(imageData, uv, textureWidth, textureHeight) {
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = textureWidth;
     tempCanvas.height = textureHeight;
     const tempContext = tempCanvas.getContext("2d");
+    if (!tempContext)
+        throw new Error("Failed to get temporary context from temporary canvas in Texture#imageFromImageData!")
     tempContext.putImageData(imageData, -uv.x, -uv.y, uv.x, uv.y, textureWidth, textureHeight); 
     const image = new Image();
     image.src = tempCanvas.toDataURL();
@@ -64,8 +66,10 @@ async function imageFromImageData(imageData, uv, textureWidth, textureHeight) {
  * @param {Texture} texture 
  * @param {Vec2d} uv
  * @param {Vec2d} position
- * @param {number} width 
- * @param {number} height 
+ * @param {number} realWidth 
+ * @param {number} realHeight 
+ * @param {number} textureWidth 
+ * @param {number} textureHeight 
  */
 export async function drawFromTexture(texture, uv, position, realWidth, realHeight, textureWidth, textureHeight) {
     if (uv.x % 1 != 0 || uv.y % 1 != 0)
@@ -73,18 +77,15 @@ export async function drawFromTexture(texture, uv, position, realWidth, realHeig
     const id = (textureWidth * textureHeight) + (uv.x + uv.y);  
     if (!imageCache.has(id)) {
         // WORKAROUND for transparency
-        const dataImage = await imageFromImageData(texture.getImageData(), uv, textureWidth, textureHeight);
-        context.drawImage(dataImage, position.x, position.y, realWidth, realHeight); 
-        imageCache.set(id, dataImage);
+        const image = await imageFromImageData(texture.getImageData(), uv, textureWidth, textureHeight);
+        context.drawImage(image, position.x, position.y, realWidth, realHeight); 
+        imageCache.set(id, image);
     } else {
-        const dataImage = imageCache.get(id);   
-        context.drawImage(dataImage, position.x, position.y, realWidth, realHeight);
+        const image = imageCache.get(id);   
+        context.drawImage(image, position.x, position.y, realWidth, realHeight);
     }
 }
 
-/**
- * @type {Map<string, Texture>}
- */
 export async function loadTextures(textures) {
     if (textures && textures instanceof Array) {
         if (textures.length == 0)
@@ -106,6 +107,8 @@ export async function loadTextures(textures) {
             if (!element.complete)
                 await element.decode()
             const id = element.getAttribute("texture-id");
+            if (!id)
+                throw new Error("Texture element does not have 'texture-id' attribute!");
             try {
                 const tempCanvas = document.createElement("canvas");
                 tempCanvas.width = element.width;
@@ -114,6 +117,8 @@ export async function loadTextures(textures) {
                 document.body.appendChild(tempCanvas);
 
                 const tempContext = tempCanvas.getContext("2d");
+                if (!tempContext)
+                    throw new Error("Failed to get temporary context from temporary canvas in Texture#loadTextures!")
                 tempContext.drawImage(element, 0, 0);
 
                 const imageData = tempContext.getImageData(0, 0, element.width, element.height);
