@@ -1,3 +1,5 @@
+import GameWindow from "./GameWindow.js";
+
 /**
  * @type {Map<string, Texture>}
  */
@@ -41,6 +43,18 @@ function setSlotId(newSlotId) {
     slotId = newSlotId;
 }
 
+/**
+ * @returns {GameWindow}
+ */
+let gameWindow;
+
+/**
+ * @param {GameWindow} gmWindow 
+ */
+function setGameWindow(gmWindow) {
+    gameWindow = gmWindow;
+}
+
 export {
     globalTextures,
     guiScale,
@@ -49,5 +63,7 @@ export {
     invertedScrollwheel,
     setInvertedScrollwheel,
     slotId,
-    setSlotId
+    setSlotId,
+    gameWindow,
+    setGameWindow
 }

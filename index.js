@@ -1,7 +1,8 @@
 import Button from './src/Button.js';
 import { drawFromTexture, loadTextures } from './src/Texture.js';
-import { globalTextures, guiScale, invertedScrollwheel, setInvertedScrollwheel, slotId, setSlotId } from './src/Globals.js';
+import { globalTextures, guiScale, invertedScrollwheel, setInvertedScrollwheel, slotId, setSlotId, gameWindow, setGameWindow } from './src/Globals.js';
 import Vec2d from "./src/Vec2d.js";
+import GameWindow from './src/GameWindow.js';
 
 /**
  * @type {HTMLCanvasElement | null}
@@ -29,7 +30,12 @@ async function renderHotbar() {
     await drawFromTexture(WIDGETS_TEXTURE, new Vec2d(0, 22), hotbarSelectorPosition, hotbarSelectorWidth, hotbarSelectorHeight, 24, 24);
 }
 
-const button = new Button("Button", new Vec2d(0, 0), 200, 20);
+const buttons = [
+    new Button("Singleplayer", new Vec2d(0, 0), 325, 28),
+    new Button("Multiplayer", new Vec2d(0, 0), 325, 28),
+    new Button("Quit", new Vec2d(0, 0), 325, 28),
+]
+
 async function render() {
     const { width, height } = canvas;
 
@@ -39,10 +45,21 @@ async function render() {
     // Hotbar
     await renderHotbar();
 
-    button.pos = new Vec2d((canvas.width / 2) - (button.width / 2), (canvas.height / 2) - (button.height / 2));
-    await button.render();
+    for (let i = 0; i < buttons.length; ++i) {
+        const button = buttons[i];
+        const x = (canvas.width / 2) - (button.width / 2);
+        const y = (canvas.height / 2) - (button.height / 2);
+        button.pos = new Vec2d(x, y + (i * button.height * 1.25));
+        await button.render();
+    }
+
     requestAnimationFrame(render);
 }
+
+window.addEventListener("resize", _ => {
+    setGameWindow(new GameWindow(document.body.clientWidth, document.body.clientHeight, guiScale));
+    canvas.width = gameWindow.getScaledWidth();
+});
 
 document.addEventListener("DOMContentLoaded", async function main() {
     const invertScrollwheelButton = document.getElementById("invertScrollwheel");
@@ -75,34 +92,46 @@ document.addEventListener("DOMContentLoaded", async function main() {
         ev.preventDefault();
         if (ev.button != 0) 
             return;
-        if (button.disabled)
-            return;
-        const { offsetX: x, offsetY: y } = ev;
-        if (button.inBounds(new Vec2d(x, y)))
-            button.pressed = true;
+        for (let i = 0; i < buttons.length; ++i) {
+            const button = buttons[i];
+            if (button.disabled)
+                continue;
+            const { offsetX: x, offsetY: y } = ev;
+            if (button.inBounds(new Vec2d(x, y)))
+                button.pressed = true;
+        }
     });
     
     canvas.addEventListener("mouseup", (ev) => {
         ev.preventDefault();
         if (ev.button != 0) 
             return;
-        if (button.disabled)
-            return;
-        button.pressed = false;
+        for (let i = 0; i < buttons.length; ++i) {
+            const button = buttons[i];
+            if (button.disabled)
+                continue;
+            button.pressed = false;
+        }
     });
 
     canvas.addEventListener("mousemove", (ev) => {
         ev.preventDefault();
-        if (button.disabled)
-            return;
         const { offsetX: x, offsetY: y } = ev;
-        if (button.inBounds(new Vec2d(x, y)))
-            button.hovered = true;
-        else 
-            button.hovered = false;
+        for (let i = 0; i < buttons.length; ++i) {
+            const button = buttons[i];
+            if (button.disabled)
+                continue;
+            if (button.inBounds(new Vec2d(x, y)))
+                button.hovered = true;
+            else 
+                button.hovered = false;
+        }
     });
     
     canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
+    setGameWindow(new GameWindow(document.body.clientWidth, document.body.clientHeight, guiScale));
+    canvas.width = gameWindow.getWidth();
 
     await loadTextures()
     await render()
