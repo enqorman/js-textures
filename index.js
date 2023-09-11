@@ -48,7 +48,7 @@ async function render() {
     for (let i = 0; i < buttons.length; ++i) {
         const button = buttons[i];
         const x = (canvas.width / 2) - (button.width / 2);
-        const y = (canvas.height / 2) - (button.height / 2);
+        const y = (canvas.height / 2) - (button.height / 2) - button.height;
         button.pos = new Vec2d(x, y + (i * button.height * 1.25));
         await button.render();
     }
